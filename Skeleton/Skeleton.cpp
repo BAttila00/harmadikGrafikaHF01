@@ -356,6 +356,7 @@ struct Object {
 	Geometry* geometry;
 	vec3 scale, translation, rotationAxis;
 	float rotationAngle;
+	vec3 velocity = vec3(0.01f, 0.0f, 0.0f);
 public:
 	Object(Shader* _shader, Material* _material, Texture* _texture, Geometry* _geometry) :
 		scale(vec3(1, 1, 1)), translation(vec3(0, 0, 0)), rotationAxis(0, 0, 1), rotationAngle(0) {
@@ -382,7 +383,14 @@ public:
 		geometry->Draw();
 	}
 
-	virtual void Animate(float tstart, float tend) { rotationAngle = 0.8f * tend; }
+	virtual void Animate(float tstart, float tend) { 
+		rotationAngle = 0.8f * tend; 
+		MoveForward();
+	}
+
+	void MoveForward() {
+		translation = translation + velocity;
+	}
 };
 
 //---------------------------
