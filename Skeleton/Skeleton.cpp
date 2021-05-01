@@ -52,10 +52,12 @@ struct Camera { // 3D camera
 	float asp;			//aspektus arány (a függöleges/a vízszintes látószög aránya) (lásd 9. diasor 17. és 26. dia)
 	float fp;			//elsö vágósík távolsága (lásd 9. diasor 17. és 26. dia)
 	float bp;			//hátsó vágósík távolsága (lásd 9. diasor 17. és 26. dia)
+	float fovAngle;
 public:
 	Camera() {
+		fovAngle = 75.0f;
 		asp = (float)windowWidth / windowHeight;
-		fov = 75.0f * (float)M_PI / 180.0f;
+		fov = fovAngle * (float)M_PI / 180.0f;
 		fp = 1; bp = 20;
 	}
 	/// <summary>
@@ -347,6 +349,8 @@ public:
 	}
 };
 
+Camera camera; // 3D camera
+
 //---------------------------
 struct Object {
 	//---------------------------
@@ -356,7 +360,7 @@ struct Object {
 	Geometry* geometry;
 	vec3 scale, translation, rotationAxis;
 	float rotationAngle;
-	vec3 velocity = vec3(0.01f, 0.0f, 0.0f);
+	vec3 velocity = vec3(0.0f, -0.05f, 0.0f);
 public:
 	Object(Shader* _shader, Material* _material, Texture* _texture, Geometry* _geometry) :
 		scale(vec3(1, 1, 1)), translation(vec3(0, 0, 0)), rotationAxis(0, 0, 1), rotationAngle(0) {
@@ -384,12 +388,25 @@ public:
 	}
 
 	virtual void Animate(float tstart, float tend) { 
-		rotationAngle = 0.8f * tend; 
+		//rotationAngle = 0.8f * tend; 
 		MoveForward();
 	}
 
 	void MoveForward() {
 		translation = translation + velocity;
+		printf("%f, %f, %f\n", translation.x, translation.y, translation.z);
+		if (translation.x > (camera.wEye.z * camera.fovAngle / 90.0f)) {
+			translation.x = -(camera.wEye.z * camera.fovAngle / 90.0f);
+		}
+		if (translation.x < -(camera.wEye.z * camera.fovAngle / 90.0f)) {
+			translation.x = (camera.wEye.z * camera.fovAngle / 90.0f);
+		}
+		if (translation.y > (camera.wEye.z * camera.fovAngle * camera.asp / 90.0f)) {
+			translation.y = -(camera.wEye.z * camera.fovAngle * camera.asp / 90.0f);
+		}
+		if (translation.y < -(camera.wEye.z * camera.fovAngle * camera.asp / 90.0f)) {
+			translation.y = (camera.wEye.z * camera.fovAngle * camera.asp / 90.0f);
+		}
 	}
 };
 
@@ -397,7 +414,6 @@ public:
 class Scene {
 	//---------------------------
 	std::vector<Object*> objects;
-	Camera camera; // 3D camera
 	std::vector<Light> lights;
 public:
 	void Build() {
@@ -426,8 +442,8 @@ public:
 
 		// Create objects by setting up their vertex data on the GPU
 		Object* sphereObject1 = new Object(phongShader, material0, texture15x20, sphere);
-		sphereObject1->translation = vec3(2, 3, 0);
-		sphereObject1->scale = vec3(1.0f, 1.0f, 1.0f);
+		sphereObject1->translation = vec3(0, 0, 0);
+		sphereObject1->scale = vec3(0.5f, 0.5f, 0.5f);
 		objects.push_back(sphereObject1);
 
 		// Camera
