@@ -158,88 +158,6 @@ public:
 //---------------------------
 //többféle képp is megjeleníthetjük az objektumainkat itt most 3 féle képp van (GouraudShader, PhongShader és NPRShader)
 //9. diasorban részletezve van (elég lehet hf-ben a phong shader)
-class GouraudShader : public Shader {
-	//---------------------------
-	const char* vertexSource = R"(
-		#version 330
-		precision highp float;
-
-		struct Light {
-			vec3 La, Le;
-			vec4 wLightPos;
-		};
-		
-		struct Material {
-			vec3 kd, ks, ka;
-			float shininess;
-		};
-
-		uniform mat4  MVP, M, Minv;  // MVP, Model, Model-inverse
-		uniform Light[8] lights;     // light source direction 
-		uniform int   nLights;		 // number of light sources
-		uniform vec3  wEye;          // pos of eye
-		uniform Material  material;  // diffuse, specular, ambient ref
-
-		layout(location = 0) in vec3  vtxPos;            // pos in modeling space
-		layout(location = 1) in vec3  vtxNorm;      	 // normal in modeling space
-
-		out vec3 radiance;		    // reflected radiance
-
-		void main() {
-			gl_Position = vec4(vtxPos, 1) * MVP; // to NDC
-			// radiance computation
-			vec4 wPos = vec4(vtxPos, 1) * M;	
-			vec3 V = normalize(wEye * wPos.w - wPos.xyz);
-			vec3 N = normalize((Minv * vec4(vtxNorm, 0)).xyz);
-			if (dot(N, V) < 0) N = -N;	// prepare for one-sided surfaces like Mobius or Klein
-
-			radiance = vec3(0, 0, 0);
-			for(int i = 0; i < nLights; i++) {
-				vec3 L = normalize(lights[i].wLightPos.xyz * wPos.w - wPos.xyz * lights[i].wLightPos.w);
-				vec3 H = normalize(L + V);
-				float cost = max(dot(N,L), 0), cosd = max(dot(N,H), 0);
-				radiance += material.ka * lights[i].La + (material.kd * cost + material.ks * pow(cosd, material.shininess)) * lights[i].Le;
-			}
-		}
-	)";
-
-	// fragment shader in GLSL
-	const char* fragmentSource = R"(
-		#version 330
-		precision highp float;
-
-		in  vec3 radiance;      // interpolated radiance
-		out vec4 fragmentColor; // output goes to frame buffer
-
-		void main() {
-			fragmentColor = vec4(radiance, 1);
-		}
-	)";
-public:
-	GouraudShader() { create(vertexSource, fragmentSource, "fragmentColor"); }
-
-	/// <summary>
-	/// egy Renderstate objektum változóival feltölti az adott shader uniform változóit
-	/// </summary>
-	/// <param name="state"></param>
-	void Bind(RenderState state) {
-		Use(); 		// make this program run
-		setUniform(state.MVP, "MVP");
-		setUniform(state.M, "M");
-		setUniform(state.Minv, "Minv");
-		setUniform(state.wEye, "wEye");
-		setUniformMaterial(*state.material, "material");
-
-		setUniform((int)state.lights.size(), "nLights");
-		for (unsigned int i = 0; i < state.lights.size(); i++) {
-			setUniformLight(state.lights[i], std::string("lights[") + std::to_string(i) + std::string("]"));
-		}
-	}
-};
-
-//---------------------------
-//többféle képp is megjeleníthetjük az objektumainkat itt most 3 féle képp van (GouraudShader, PhongShader és NPRShader)
-//9. diasorban részletezve van (elég lehet hf-ben a phong shader)
 class PhongShader : public Shader {
 	//---------------------------
 	const char* vertexSource = R"(
@@ -345,73 +263,6 @@ public:
 		for (unsigned int i = 0; i < state.lights.size(); i++) {
 			setUniformLight(state.lights[i], std::string("lights[") + std::to_string(i) + std::string("]"));
 		}
-	}
-};
-
-//---------------------------
-//többféle képp is megjeleníthetjük az objektumainkat itt most 3 féle képp van (GouraudShader, PhongShader és NPRShader)
-//9. diasorban részletezve van (elég lehet hf-ben a phong shader)
-class NPRShader : public Shader {
-	//---------------------------
-	const char* vertexSource = R"(
-		#version 330
-		precision highp float;
-
-		uniform mat4  MVP, M, Minv; // MVP, Model, Model-inverse
-		uniform	vec4  wLightPos;
-		uniform vec3  wEye;         // pos of eye
-
-		layout(location = 0) in vec3  vtxPos;            // pos in modeling space
-		layout(location = 1) in vec3  vtxNorm;      	 // normal in modeling space
-		layout(location = 2) in vec2  vtxUV;
-
-		out vec3 wNormal, wView, wLight;				// in world space
-		out vec2 texcoord;
-
-		void main() {
-		   gl_Position = vec4(vtxPos, 1) * MVP; // to NDC
-		   vec4 wPos = vec4(vtxPos, 1) * M;
-		   wLight = wLightPos.xyz * wPos.w - wPos.xyz * wLightPos.w;
-		   wView  = wEye * wPos.w - wPos.xyz;
-		   wNormal = (Minv * vec4(vtxNorm, 0)).xyz;
-		   texcoord = vtxUV;
-		}
-	)";
-
-	// fragment shader in GLSL
-	const char* fragmentSource = R"(
-		#version 330
-		precision highp float;
-
-		uniform sampler2D diffuseTexture;
-
-		in  vec3 wNormal, wView, wLight;	// interpolated
-		in  vec2 texcoord;
-		out vec4 fragmentColor;    			// output goes to frame buffer
-
-		void main() {
-		   vec3 N = normalize(wNormal), V = normalize(wView), L = normalize(wLight);
-		   if (dot(N, V) < 0) N = -N;	// prepare for one-sided surfaces like Mobius or Klein
-		   float y = (dot(N, L) > 0.5) ? 1 : 0.5;
-		   if (abs(dot(N, V)) < 0.2) fragmentColor = vec4(0, 0, 0, 1);
-		   else						 fragmentColor = vec4(y * texture(diffuseTexture, texcoord).rgb, 1);
-		}
-	)";
-public:
-	NPRShader() { create(vertexSource, fragmentSource, "fragmentColor"); }
-
-	/// <summary>
-	/// egy Renderstate objektum változóival feltölti az adott shader uniform változóit
-	/// </summary>
-	/// <param name="state"></param>
-	void Bind(RenderState state) {
-		Use(); 		// make this program run
-		setUniform(state.MVP, "MVP");
-		setUniform(state.M, "M");
-		setUniform(state.Minv, "Minv");
-		setUniform(state.wEye, "wEye");
-		setUniform(*state.texture, std::string("diffuseTexture"));
-		setUniform(state.lights[0].wLightPos, "wLightPos");
 	}
 };
 
@@ -648,8 +499,6 @@ public:
 	void Build() {
 		// Shaders
 		Shader* phongShader = new PhongShader();
-		Shader* gouraudShader = new GouraudShader();
-		Shader* nprShader = new NPRShader();
 
 		// Materials
 		Material* material0 = new Material;
@@ -714,18 +563,6 @@ public:
 		diniObject1->scale = vec3(0.7f, 0.7f, 0.7f);
 		diniObject1->rotationAxis = vec3(1, 0, 0);
 		objects.push_back(diniObject1);
-
-		int nObjects = objects.size();
-		for (int i = 0; i < nObjects; i++) {
-			Object* object = new Object(*objects[i]);
-			object->translation.y -= 3;
-			object->shader = gouraudShader;
-			objects.push_back(object);
-			object = new Object(*objects[i]);
-			object->translation.y -= 6;
-			object->shader = nprShader;
-			objects.push_back(object);
-		}
 
 		// Camera
 		camera.wEye = vec3(0, 0, 15);
