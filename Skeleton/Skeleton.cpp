@@ -212,7 +212,6 @@ class PhongShader : public Shader {
 		uniform Material material;
 		uniform Light[8] lights;    // light sources 
 		uniform int   nLights;
-		uniform sampler2D diffuseTexture;
 
 		in  vec3 wNormal;       // interpolated world sp normal
 		in  vec3 wView;         // interpolated world sp view
@@ -252,7 +251,6 @@ public:
 		setUniform(state.M, "M");
 		setUniform(state.Minv, "Minv");
 		setUniform(state.wEye, "wEye");
-		setUniform(*state.texture, std::string("diffuseTexture"));
 		setUniformMaterial(*state.material, "material");
 
 		setUniform((int)state.lights.size(), "nLights");
