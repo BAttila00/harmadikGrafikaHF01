@@ -55,7 +55,7 @@ struct Camera { // 3D camera
 	float fovAngle;
 public:
 	Camera() {
-		fovAngle = 75.0f;
+		fovAngle = 60.0f;
 		asp = (float)windowWidth / windowHeight;
 		fov = fovAngle * (float)M_PI / 180.0f;
 		fp = 1; bp = 20;
@@ -360,7 +360,7 @@ struct Object {
 	Geometry* geometry;
 	vec3 scale, translation, rotationAxis;
 	float rotationAngle;
-	vec3 velocity = vec3(0.0f, -0.05f, 0.0f);
+	vec3 velocity = vec3(0.05f, 0.0f, 0.0f);
 public:
 	Object(Shader* _shader, Material* _material, Texture* _texture, Geometry* _geometry) :
 		scale(vec3(1, 1, 1)), translation(vec3(0, 0, 0)), rotationAxis(0, 0, 1), rotationAngle(0) {
@@ -395,8 +395,8 @@ public:
 	void MoveForward() {
 		translation = translation + velocity;
 		printf("%f, %f, %f\n", translation.x, translation.y, translation.z);
-		if (translation.x > (camera.wEye.z * camera.fovAngle / 90.0f)) {
-			translation.x = -(camera.wEye.z * camera.fovAngle / 90.0f);
+		if (translation.x > (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)))) {
+			translation.x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
 		}
 		if (translation.x < -(camera.wEye.z * camera.fovAngle / 90.0f)) {
 			translation.x = (camera.wEye.z * camera.fovAngle / 90.0f);
@@ -505,7 +505,15 @@ void onKeyboard(unsigned char key, int pX, int pY) { }
 void onKeyboardUp(unsigned char key, int pX, int pY) { }
 
 // Mouse click event
-void onMouse(int button, int state, int pX, int pY) { }
+void onMouse(int button, int state, int pX, int pY) { 
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {  // GLUT_LEFT_BUTTON / GLUT_RIGHT_BUTTON and GLUT_DOWN / GLUT_UP
+		float cX = 2.0f * pX / windowWidth - 1;	// flip y axis		//kiszámoljuk a normalizált eszközkoordinátarendszer beli kurzor pozíciót
+		float cY = 1.0f - 2.0f * pY / windowHeight;
+		vec2 velocity = vec2(cX, cY);
+		velocity = velocity - vec2(-1.0f, -1.0f);
+		printf("%f, %f", velocity.x, velocity.y);
+	}
+}
 
 // Move mouse with key pressed
 void onMouseMotion(int pX, int pY) {
