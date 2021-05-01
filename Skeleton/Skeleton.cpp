@@ -349,6 +349,16 @@ public:
 	}
 };
 
+//---------------------------
+class Square : public ParamSurface {
+	//---------------------------
+public:
+	Square() { create(); }
+	void eval(Dnum2& U, Dnum2& V, Dnum2& X, Dnum2& Y, Dnum2& Z) {
+		X = U; Y = V; Z = Dnum2();
+	}
+};
+
 Camera camera; // 3D camera
 
 //---------------------------
@@ -441,12 +451,18 @@ public:
 
 		// Textures
 		Texture* texture4x8 = new CheckerBoardTexture(4, 8);
-		Texture* texture15x20 = new CheckerBoardTexture(15, 20);
+		Texture* texture15x20 = new CheckerBoardTexture(15, 20);	//késöbb törlendö !!!!!!!!!!!!!!!
 
 		// Camera
 		camera.wEye = vec3(0, 0, 15);
 		camera.wLookat = vec3(0, 0, 0);
 		camera.wVup = vec3(0, 1, 0);
+
+		Geometry* square = new Square();
+		Object* squareObject1 = new Object(phongShader, material0, texture15x20, square);
+		squareObject1->translation = vec3(-50.0f, -50.0f, 0.0f);
+		squareObject1->scale = vec3(100.0f, 100.0f, 1.0f);
+		objects.push_back(squareObject1);
 
 		// Geometries
 		Geometry* sphere = new Sphere();
