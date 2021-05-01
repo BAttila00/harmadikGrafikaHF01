@@ -350,104 +350,6 @@ public:
 };
 
 //---------------------------
-class Tractricoid : public ParamSurface {
-	//---------------------------
-public:
-	Tractricoid() { create(); }
-	void eval(Dnum2& U, Dnum2& V, Dnum2& X, Dnum2& Y, Dnum2& Z) {
-		const float height = 3.0f;
-		U = U * height, V = V * 2 * M_PI;
-		X = Cos(V) / Cosh(U); Y = Sin(V) / Cosh(U); Z = U - Tanh(U);
-	}
-};
-
-//---------------------------
-class Cylinder : public ParamSurface {
-	//---------------------------
-public:
-	Cylinder() { create(); }
-	void eval(Dnum2& U, Dnum2& V, Dnum2& X, Dnum2& Y, Dnum2& Z) {
-		U = U * 2.0f * M_PI, V = V * 2 - 1.0f;
-		X = Cos(U); Y = Sin(U); Z = V;
-	}
-};
-
-//---------------------------
-class Torus : public ParamSurface {
-	//---------------------------
-public:
-	Torus() { create(); }
-	void eval(Dnum2& U, Dnum2& V, Dnum2& X, Dnum2& Y, Dnum2& Z) {
-		const float R = 1, r = 0.5f;
-		U = U * 2.0f * M_PI, V = V * 2.0f * M_PI;
-		Dnum2 D = Cos(U) * r + R;
-		X = D * Cos(V); Y = D * Sin(V); Z = Sin(U) * r;
-	}
-};
-
-//---------------------------
-class Mobius : public ParamSurface {
-	//---------------------------
-public:
-	Mobius() { create(); }
-	void eval(Dnum2& U, Dnum2& V, Dnum2& X, Dnum2& Y, Dnum2& Z) {
-		const float R = 1, width = 0.5f;
-		U = U * M_PI, V = (V - 0.5f) * width;
-		X = (Cos(U) * V + R) * Cos(U * 2);
-		Y = (Cos(U) * V + R) * Sin(U * 2);
-		Z = Sin(U) * V;
-	}
-};
-
-//---------------------------
-class Klein : public ParamSurface {
-	//---------------------------
-	const float size = 1.5f;
-public:
-	Klein() { create(); }
-	void eval(Dnum2& U, Dnum2& V, Dnum2& X, Dnum2& Y, Dnum2& Z) {
-		U = U * M_PI * 2, V = V * M_PI * 2;
-		Dnum2 a = Cos(U) * (Sin(U) + 1) * 0.3f;
-		Dnum2 b = Sin(U) * 0.8f;
-		Dnum2 c = (Cos(U) * (-0.1f) + 0.2f);
-		X = a + c * ((U.f > M_PI) ? Cos(V + M_PI) : Cos(U) * Cos(V));
-		Y = b + ((U.f > M_PI) ? 0 : c * Sin(U) * Cos(V));
-		Z = c * Sin(V);
-	}
-};
-
-//---------------------------
-class Boy : public ParamSurface {
-	//---------------------------
-public:
-	Boy() { create(); }
-	void eval(Dnum2& U, Dnum2& V, Dnum2& X, Dnum2& Y, Dnum2& Z) {
-		U = (U - 0.5f) * M_PI, V = V * M_PI;
-		float r2 = sqrt(2.0f);
-		Dnum2 denom = (Sin(U * 3) * Sin(V * 2) * (-3 / r2) + 3) * 1.2f;
-		Dnum2 CosV2 = Cos(V) * Cos(V);
-		X = (Cos(U * 2) * CosV2 * r2 + Cos(U) * Sin(V * 2)) / denom;
-		Y = (Sin(U * 2) * CosV2 * r2 - Sin(U) * Sin(V * 2)) / denom;
-		Z = (CosV2 * 3) / denom;
-	}
-};
-
-//---------------------------
-class Dini : public ParamSurface {
-	//---------------------------
-	Dnum2 a = 1.0f, b = 0.15f;
-public:
-	Dini() { create(); }
-
-	void eval(Dnum2& U, Dnum2& V, Dnum2& X, Dnum2& Y, Dnum2& Z) {
-		U = U * 4 * M_PI, V = V * (1 - 0.1f) + 0.1f;
-		X = a * Cos(U) * Sin(V);
-		Y = a * Sin(U) * Sin(V);
-		Z = a * (Cos(V) + Log(Tan(V / 2))) + b * U + 3;
-	}
-};
-
-//---------------------------
 struct Object {
 	//---------------------------
 	Shader* shader;
@@ -515,50 +417,12 @@ public:
 
 		// Geometries
 		Geometry* sphere = new Sphere();
-		Geometry* tractricoid = new Tractricoid();
-		Geometry* torus = new Torus();
-		Geometry* mobius = new Mobius();
-		Geometry* klein = new Klein();
-		Geometry* boy = new Boy();
-		Geometry* dini = new Dini();
 
 		// Create objects by setting up their vertex data on the GPU
 		Object* sphereObject1 = new Object(phongShader, material0, texture15x20, sphere);
 		sphereObject1->translation = vec3(2, 3, 0);
 		sphereObject1->scale = vec3(1.0f, 1.0f, 1.0f);
 		objects.push_back(sphereObject1);
-
-		// Create objects by setting up their vertex data on the GPU
-		Object* tractiObject1 = new Object(phongShader, material0, texture15x20, tractricoid);
-		tractiObject1->translation = vec3(-6, 3, 0);
-		tractiObject1->rotationAxis = vec3(1, 0, 0);
-		objects.push_back(tractiObject1);
-
-		Object* torusObject1 = new Object(phongShader, material0, texture4x8, torus);
-		torusObject1->translation = vec3(-3, 3, 0);
-		torusObject1->scale = vec3(0.7f, 0.7f, 0.7f);
-		torusObject1->rotationAxis = vec3(1, 0, 0);
-		objects.push_back(torusObject1);
-
-		Object* mobiusObject1 = new Object(phongShader, material0, texture4x8, mobius);
-		mobiusObject1->translation = vec3(0, 3, 0);
-		mobiusObject1->scale = vec3(0.7f, 0.7f, 0.7f);
-		mobiusObject1->rotationAxis = vec3(1, 0, 0);
-		objects.push_back(mobiusObject1);
-
-		Object* kleinObject1 = new Object(phongShader, material1, texture4x8, klein);
-		kleinObject1->translation = vec3(3, 3, 0);
-		objects.push_back(kleinObject1);
-
-		Object* boyObject1 = new Object(phongShader, material1, texture15x20, boy);
-		boyObject1->translation = vec3(6, 3, 0);
-		objects.push_back(boyObject1);
-
-		Object* diniObject1 = new Object(phongShader, material1, texture15x20, dini);
-		diniObject1->translation = vec3(9, 3, 0);
-		diniObject1->scale = vec3(0.7f, 0.7f, 0.7f);
-		diniObject1->rotationAxis = vec3(1, 0, 0);
-		objects.push_back(diniObject1);
 
 		// Camera
 		camera.wEye = vec3(0, 0, 15);
