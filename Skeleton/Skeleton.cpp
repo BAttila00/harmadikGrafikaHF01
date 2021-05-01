@@ -360,7 +360,8 @@ struct Object {
 	Geometry* geometry;
 	vec3 scale, translation, rotationAxis;
 	float rotationAngle;
-	vec3 velocity = vec3(0.0f, -0.05f, 0.0f);
+	vec3 velocity;
+	bool isMoving;
 public:
 	Object(Shader* _shader, Material* _material, Texture* _texture, Geometry* _geometry) :
 		scale(vec3(1, 1, 1)), translation(vec3(0, 0, 0)), rotationAxis(0, 0, 1), rotationAngle(0) {
@@ -368,6 +369,8 @@ public:
 		texture = _texture;
 		material = _material;
 		geometry = _geometry;
+		velocity = vec3(0.0f, 0.0f, 0.0f);
+		isMoving = false;
 	}
 
 	virtual void SetModelingTransform(mat4& M, mat4& Minv) {
@@ -389,7 +392,8 @@ public:
 
 	virtual void Animate(float tstart, float tend) { 
 		//rotationAngle = 0.8f * tend; 
-		MoveForward();
+		if(isMoving)
+			MoveForward();
 	}
 
 	void MoveForward() {
@@ -410,15 +414,17 @@ public:
 	}
 };
 
+std::vector<Object*> objects;
+
 //---------------------------
 class Scene {
 	//---------------------------
-	std::vector<Object*> objects;
 	std::vector<Light> lights;
+	Shader* phongShader;
 public:
 	void Build() {
 		// Shaders
-		Shader* phongShader = new PhongShader();
+		phongShader = new PhongShader();
 
 		// Materials
 		Material* material0 = new Material;
@@ -437,19 +443,21 @@ public:
 		Texture* texture4x8 = new CheckerBoardTexture(4, 8);
 		Texture* texture15x20 = new CheckerBoardTexture(15, 20);
 
+		// Camera
+		camera.wEye = vec3(0, 0, 15);
+		camera.wLookat = vec3(0, 0, 0);
+		camera.wVup = vec3(0, 1, 0);
+
 		// Geometries
 		Geometry* sphere = new Sphere();
 
 		// Create objects by setting up their vertex data on the GPU
 		Object* sphereObject1 = new Object(phongShader, material0, texture15x20, sphere);
-		sphereObject1->translation = vec3(0, 0, 0);
-		sphereObject1->scale = vec3(0.5f, 0.5f, 0.5f);
+		float x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
+		float y = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
+		sphereObject1->translation = vec3(x + 0.5f, y + 0.5f, 0);
+		sphereObject1->scale = vec3(0.4f, 0.4f, 0.4f);
 		objects.push_back(sphereObject1);
-
-		// Camera
-		camera.wEye = vec3(0, 0, 15);
-		camera.wLookat = vec3(0, 0, 0);
-		camera.wVup = vec3(0, 1, 0);
 
 		// Lights
 		lights.resize(3);
@@ -477,6 +485,25 @@ public:
 
 	void Animate(float tstart, float tend) {
 		for (Object* obj : objects) obj->Animate(tstart, tend);
+	}
+
+	void CreateNewBall() {
+		Material* material = new Material;
+		material->kd = vec3(0.6f, 0.4f, 0.2f);
+		material->ks = vec3(4, 4, 4);
+		material->ka = vec3(0.1f, 0.1f, 0.1f);
+		material->shininess = 30;
+
+		Texture* texture15x20 = new CheckerBoardTexture(15, 20);		//késöbb törlendö !!!!!!!!!!!!!!!
+
+		Geometry* sphere = new Sphere();
+
+		Object* sphereObject1 = new Object(phongShader, material, texture15x20, sphere);
+		float x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
+		float y = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
+		sphereObject1->translation = vec3(x + 0.5f, y + 0.5f, 0);
+		sphereObject1->scale = vec3(0.4f, 0.4f, 0.4f);
+		objects.push_back(sphereObject1);
 	}
 };
 
@@ -512,6 +539,11 @@ void onMouse(int button, int state, int pX, int pY) {
 		vec2 velocity = vec2(cX, cY);
 		velocity = velocity - vec2(-1.0f, -1.0f);
 		printf("%f, %f", velocity.x, velocity.y);
+
+		objects[objects.size() - 1]->velocity = velocity * 0.1f;
+		objects[objects.size() - 1]->isMoving = true;
+
+		scene.CreateNewBall();
 	}
 }
 
