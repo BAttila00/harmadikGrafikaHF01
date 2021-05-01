@@ -181,7 +181,6 @@ class PhongShader : public Shader {
 		out vec3 wNormal;		    // normal in world space
 		out vec3 wView;             // view in world space
 		out vec3 wLight[8];		    // light dir in world space
-		out vec2 texcoord;
 
 		void main() {
 			gl_Position = vec4(vtxPos, 1) * MVP; // to NDC
@@ -192,7 +191,6 @@ class PhongShader : public Shader {
 			}
 		    wView  = wEye * wPos.w - wPos.xyz;
 		    wNormal = (Minv * vec4(vtxNorm, 0)).xyz;
-		    texcoord = vtxUV;
 		}
 	)";
 
@@ -219,7 +217,6 @@ class PhongShader : public Shader {
 		in  vec3 wNormal;       // interpolated world sp normal
 		in  vec3 wView;         // interpolated world sp view
 		in  vec3 wLight[8];     // interpolated world sp illum dir
-		in  vec2 texcoord;
 		
         out vec4 fragmentColor; // output goes to frame buffer
 
@@ -227,9 +224,8 @@ class PhongShader : public Shader {
 			vec3 N = normalize(wNormal);
 			vec3 V = normalize(wView); 
 			if (dot(N, V) < 0) N = -N;	// prepare for one-sided surfaces like Mobius or Klein
-			vec3 texColor = texture(diffuseTexture, texcoord).rgb;
-			vec3 ka = material.ka * texColor;
-			vec3 kd = material.kd * texColor;
+			vec3 ka = material.ka;
+			vec3 kd = material.kd;
 
 			vec3 radiance = vec3(0, 0, 0);
 			for(int i = 0; i < nLights; i++) {
@@ -238,7 +234,7 @@ class PhongShader : public Shader {
 				float cost = max(dot(N,L), 0), cosd = max(dot(N,H), 0);
 				// kd and ka are modulated by the texture
 				radiance += ka * lights[i].La + 
-                           (kd * texColor * cost + material.ks * pow(cosd, material.shininess)) * lights[i].Le;
+                           (kd * cost + material.ks * pow(cosd, material.shininess)) * lights[i].Le;
 			}
 			fragmentColor = vec4(radiance, 1);
 		}
