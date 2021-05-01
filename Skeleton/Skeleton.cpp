@@ -360,7 +360,7 @@ struct Object {
 	Geometry* geometry;
 	vec3 scale, translation, rotationAxis;
 	float rotationAngle;
-	vec3 velocity = vec3(0.05f, 0.0f, 0.0f);
+	vec3 velocity = vec3(0.0f, -0.05f, 0.0f);
 public:
 	Object(Shader* _shader, Material* _material, Texture* _texture, Geometry* _geometry) :
 		scale(vec3(1, 1, 1)), translation(vec3(0, 0, 0)), rotationAxis(0, 0, 1), rotationAngle(0) {
@@ -398,14 +398,14 @@ public:
 		if (translation.x > (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)))) {
 			translation.x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
 		}
-		if (translation.x < -(camera.wEye.z * camera.fovAngle / 90.0f)) {
-			translation.x = (camera.wEye.z * camera.fovAngle / 90.0f);
+		if (translation.x < -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)))) {
+			translation.x = (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
 		}
-		if (translation.y > (camera.wEye.z * camera.fovAngle * camera.asp / 90.0f)) {
-			translation.y = -(camera.wEye.z * camera.fovAngle * camera.asp / 90.0f);
+		if (translation.y > (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp)) {
+			translation.y = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
 		}
-		if (translation.y < -(camera.wEye.z * camera.fovAngle * camera.asp / 90.0f)) {
-			translation.y = (camera.wEye.z * camera.fovAngle * camera.asp / 90.0f);
+		if (translation.y < -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp)) {
+			translation.y = (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
 		}
 	}
 };
