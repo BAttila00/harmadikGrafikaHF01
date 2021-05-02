@@ -231,9 +231,9 @@ class PhongShader : public Shader {
 			vec3 ka = material.ka;
 			vec3 kd = material.kd;
 
-			if(position_out.x < 0.1f && position_out.x > -0.1f){
-				kd = kd - 0.1f;
-			}
+			//if(position_out.x < 2 && position_out.x > -2 && position_out.y < 2 && position_out.y > -2){
+			//	kd = kd - 0.1f;
+			//}
 			vec3 radiance = vec3(0, 0, 0);
 			for(int i = 0; i < nLights; i++) {
 				vec3 L = normalize(wLight[i]);
@@ -365,6 +365,17 @@ public:
 	}
 };
 
+//---------------------------
+class Circle : public ParamSurface {
+	//---------------------------
+public:
+	Circle() { create(); }
+	void eval(Dnum2& U, Dnum2& V, Dnum2& X, Dnum2& Y, Dnum2& Z) {
+		U = U * 2.0f * (float)M_PI, V = V * (float)M_PI;
+		X = Cos(U) * Sin(V); Y = Sin(U) * Sin(V); Z = Dnum2();
+	}
+};
+
 Camera camera; // 3D camera
 
 //---------------------------
@@ -466,7 +477,7 @@ public:
 
 		Geometry* square = new Square();
 		Object* squareObject1 = new Object(phongShader, material0, texture15x20, square);
-		squareObject1->translation = vec3(-50.0f, -50.0f, 0.0f);
+		squareObject1->translation = vec3(-50.0f, -50.0f, -0.1f);
 		squareObject1->scale = vec3(100.0f, 100.0f, 1.0f);
 		objects.push_back(squareObject1);
 
@@ -526,6 +537,22 @@ public:
 		sphereObject1->translation = vec3(x + 0.5f, y + 0.5f, 0);
 		sphereObject1->scale = vec3(0.4f, 0.4f, 0.4f);
 		objects.push_back(sphereObject1);
+	}
+
+	void CreateNewCircle(float cX, float cY, float size) {
+		Material* material2 = new Material;
+		material2->kd = vec3(0.5f, 0.3f, 0.1f);
+		material2->ks = vec3(4, 4, 4);
+		material2->ka = vec3(0.1f, 0.1f, 0.1f);
+		material2->shininess = 100;
+
+		Texture* texture15x20 = new CheckerBoardTexture(15, 20);		//késöbb törlendö !!!!!!!!!!!!!!!
+
+		Geometry* circle = new Circle();
+		Object* circleObject1 = new Object(phongShader, material2, texture15x20, circle);
+		circleObject1->translation = vec3(0.0f, 0.0f, 0.1f);
+		circleObject1->scale = vec3(1.0f, 1.0f, 1.0f);
+		objects.push_back(circleObject1);
 	}
 };
 
