@@ -442,6 +442,7 @@ public:
 };
 
 std::vector<Object*> objects;
+Object* lastSphereObject;
 
 //---------------------------
 class Scene {
@@ -486,6 +487,7 @@ public:
 
 		// Create objects by setting up their vertex data on the GPU
 		Object* sphereObject1 = new Object(phongShader, material0, texture15x20, sphere);
+		lastSphereObject = sphereObject1;
 		float x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
 		float y = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
 		sphereObject1->translation = vec3(x + 0.5f, y + 0.5f, 0);
@@ -532,6 +534,7 @@ public:
 		Geometry* sphere = new Sphere();
 
 		Object* sphereObject1 = new Object(phongShader, material, texture15x20, sphere);
+		lastSphereObject = sphereObject1;
 		float x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
 		float y = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
 		sphereObject1->translation = vec3(x + 0.5f, y + 0.5f, 0);
@@ -550,7 +553,9 @@ public:
 
 		Geometry* circle = new Circle();
 		Object* circleObject1 = new Object(phongShader, material2, texture15x20, circle);
-		circleObject1->translation = vec3(0.0f, 0.0f, 0.1f);
+		float x = cX * (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
+		float y = cY * (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
+		circleObject1->translation = vec3(x, y, 0.1f);
 		circleObject1->scale = vec3(1.0f, 1.0f, 1.0f);
 		objects.push_back(circleObject1);
 	}
@@ -589,10 +594,17 @@ void onMouse(int button, int state, int pX, int pY) {
 		velocity = vec2(cX, cY) - vec2(-1.0f, -1.0f);
 		//printf("%f, %f", velocity.x, velocity.y);
 
-		objects[objects.size() - 1]->velocity = velocity * 0.1f;
-		objects[objects.size() - 1]->isMoving = true;
+		lastSphereObject->velocity = velocity * 0.1f;
+		lastSphereObject->isMoving = true;
 
 		scene.CreateNewBall();
+	}
+
+	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {  // GLUT_LEFT_BUTTON / GLUT_RIGHT_BUTTON and GLUT_DOWN / GLUT_UP
+		float cX = 2.0f * pX / windowWidth - 1;	// flip y axis		//kiszámoljuk a normalizált eszközkoordinátarendszer beli kurzor pozíciót
+		float cY = 1.0f - 2.0f * pY / windowHeight;
+
+		scene.CreateNewCircle(cX, cY, 2.0f);
 	}
 }
 
