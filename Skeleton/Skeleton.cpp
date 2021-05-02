@@ -183,8 +183,10 @@ class PhongShader : public Shader {
 		out vec3 wNormal;		    // normal in world space
 		out vec3 wView;             // view in world space
 		out vec3 wLight[8];		    // light dir in world space
+		out vec4 position_out;
 
 		void main() {
+			position_out = vec4(vtxPos, 1) * MVP;
 			gl_Position = vec4(vtxPos, 1) * MVP; // to NDC
 			// vectors for radiance computation
 			vec4 wPos = vec4(vtxPos, 1) * M;
@@ -218,6 +220,7 @@ class PhongShader : public Shader {
 		in  vec3 wNormal;       // interpolated world sp normal
 		in  vec3 wView;         // interpolated world sp view
 		in  vec3 wLight[8];     // interpolated world sp illum dir
+		in  vec4 position_out;
 		
         out vec4 fragmentColor; // output goes to frame buffer
 
@@ -228,6 +231,9 @@ class PhongShader : public Shader {
 			vec3 ka = material.ka;
 			vec3 kd = material.kd;
 
+			if(position_out.x < 0.1f && position_out.x > -0.1f){
+				kd = kd - 0.1f;
+			}
 			vec3 radiance = vec3(0, 0, 0);
 			for(int i = 0; i < nLights; i++) {
 				vec3 L = normalize(wLight[i]);
@@ -408,18 +414,18 @@ public:
 
 	void MoveForward() {
 		translation = translation + velocity;
-		printf("%f, %f, %f\n", translation.x, translation.y, translation.z);
-		if (translation.x > (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)))) {
-			translation.x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
+		//printf("%f, %f, %f\n", translation.x, translation.y, translation.z);
+		if (translation.x > (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp)) {
+			translation.x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
 		}
-		if (translation.x < -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)))) {
-			translation.x = (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
+		if (translation.x < -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp)) {
+			translation.x = (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
 		}
-		if (translation.y > (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp)) {
-			translation.y = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
+		if (translation.y > (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)))) {
+			translation.y = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
 		}
-		if (translation.y < -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp)) {
-			translation.y = (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
+		if (translation.y < -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)))) {
+			translation.y = (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
 		}
 	}
 };
@@ -469,8 +475,8 @@ public:
 
 		// Create objects by setting up their vertex data on the GPU
 		Object* sphereObject1 = new Object(phongShader, material0, texture15x20, sphere);
-		float x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
-		float y = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
+		float x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
+		float y = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
 		sphereObject1->translation = vec3(x + 0.5f, y + 0.5f, 0);
 		sphereObject1->scale = vec3(0.4f, 0.4f, 0.4f);
 		objects.push_back(sphereObject1);
@@ -481,9 +487,9 @@ public:
 		lights[0].La = vec3(0.1f, 0.1f, 1);
 		lights[0].Le = vec3(1, 1, 1);
 
-		lights[1].wLightPos = vec4(5, 10, 20, 1);	// not ideal point -> dot light source
-		lights[1].La = vec3(0.2f, 0.2f, 0.2f);
-		lights[1].Le = vec3(1, 1, 1);
+		//lights[1].wLightPos = vec4(5, 10, 20, 1);	// not ideal point -> dot light source
+		//lights[1].La = vec3(0.2f, 0.2f, 0.2f);
+		//lights[1].Le = vec3(1, 1, 1);
 
 		lights[2].wLightPos = vec4(-5, 5, 5, 1);	// not ideal point -> dot light source
 		lights[2].La = vec3(0.1f, 0.1f, 0.1f);
@@ -515,8 +521,8 @@ public:
 		Geometry* sphere = new Sphere();
 
 		Object* sphereObject1 = new Object(phongShader, material, texture15x20, sphere);
-		float x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
-		float y = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
+		float x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
+		float y = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
 		sphereObject1->translation = vec3(x + 0.5f, y + 0.5f, 0);
 		sphereObject1->scale = vec3(0.4f, 0.4f, 0.4f);
 		objects.push_back(sphereObject1);
@@ -552,9 +558,9 @@ void onMouse(int button, int state, int pX, int pY) {
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {  // GLUT_LEFT_BUTTON / GLUT_RIGHT_BUTTON and GLUT_DOWN / GLUT_UP
 		float cX = 2.0f * pX / windowWidth - 1;	// flip y axis		//kiszámoljuk a normalizált eszközkoordinátarendszer beli kurzor pozíciót
 		float cY = 1.0f - 2.0f * pY / windowHeight;
-		vec2 velocity = vec2(cX, cY);
-		velocity = velocity - vec2(-1.0f, -1.0f);
-		printf("%f, %f", velocity.x, velocity.y);
+		vec2 velocity;
+		velocity = vec2(cX, cY) - vec2(-1.0f, -1.0f);
+		//printf("%f, %f", velocity.x, velocity.y);
 
 		objects[objects.size() - 1]->velocity = velocity * 0.1f;
 		objects[objects.size() - 1]->isMoving = true;
