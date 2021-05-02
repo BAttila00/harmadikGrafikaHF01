@@ -477,15 +477,15 @@ public:
 
 		// Lights
 		lights.resize(3);
-		lights[0].wLightPos = vec4(5, 5, 4, 0);	// ideal point -> directional light source
+		lights[0].wLightPos = vec4(5, 5, 4, 1);	// not ideal point -> dot light source
 		lights[0].La = vec3(0.1f, 0.1f, 1);
 		lights[0].Le = vec3(1, 1, 1);
 
-		lights[1].wLightPos = vec4(5, 10, 20, 0);	// ideal point -> directional light source
+		lights[1].wLightPos = vec4(5, 10, 20, 1);	// not ideal point -> dot light source
 		lights[1].La = vec3(0.2f, 0.2f, 0.2f);
 		lights[1].Le = vec3(1, 1, 1);
 
-		lights[2].wLightPos = vec4(-5, 5, 5, 0);	// ideal point -> directional light source
+		lights[2].wLightPos = vec4(-5, 5, 5, 1);	// not ideal point -> dot light source
 		lights[2].La = vec3(0.1f, 0.1f, 0.1f);
 		lights[2].Le = vec3(1, 1, 1);
 	}
