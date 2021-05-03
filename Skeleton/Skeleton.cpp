@@ -377,7 +377,6 @@ public:
 };
 
 Camera camera; // 3D camera
-
 //---------------------------
 struct Object {
 	//---------------------------
@@ -389,8 +388,9 @@ struct Object {
 	float rotationAngle;
 	vec3 velocity;
 	bool isMoving;
+	float mass;
 public:
-	Object(Shader* _shader, Material* _material, Texture* _texture, Geometry* _geometry) :
+	Object(Shader* _shader, Material* _material, Texture* _texture, Geometry* _geometry, float _mass) :
 		scale(vec3(1, 1, 1)), translation(vec3(0, 0, 0)), rotationAxis(0, 0, 1), rotationAngle(0) {
 		shader = _shader;
 		texture = _texture;
@@ -398,6 +398,7 @@ public:
 		geometry = _geometry;
 		velocity = vec3(0.0f, 0.0f, 0.0f);
 		isMoving = false;
+		mass = _mass;
 	}
 
 	virtual void SetModelingTransform(mat4& M, mat4& Minv) {
@@ -417,8 +418,11 @@ public:
 		geometry->Draw();
 	}
 
-	virtual void Animate(float tstart, float tend) { 
+	virtual void Animate(float tstart, float tend, vec3 force) { 
 		//rotationAngle = 0.8f * tend; 
+		float dt = tend - tstart;
+		vec3 acceleration = force * (1 / mass);
+		velocity = velocity + acceleration * dt;
 		if(isMoving)
 			MoveForward();
 	}
@@ -443,6 +447,7 @@ public:
 
 std::vector<Object*> objects;
 Object* lastSphereObject;
+const float fNewton = 0.003f;
 
 //---------------------------
 class Scene {
@@ -477,7 +482,7 @@ public:
 		camera.wVup = vec3(0, 1, 0);
 
 		Geometry* square = new Square();
-		Object* squareObject1 = new Object(phongShader, material0, texture15x20, square);
+		Object* squareObject1 = new Object(phongShader, material0, texture15x20, square, 0.0f);
 		squareObject1->translation = vec3(-50.0f, -50.0f, -0.1f);
 		squareObject1->scale = vec3(100.0f, 100.0f, 1.0f);
 		objects.push_back(squareObject1);
@@ -486,7 +491,7 @@ public:
 		Geometry* sphere = new Sphere();
 
 		// Create objects by setting up their vertex data on the GPU
-		Object* sphereObject1 = new Object(phongShader, material0, texture15x20, sphere);
+		Object* sphereObject1 = new Object(phongShader, material0, texture15x20, sphere, 50.0f);
 		lastSphereObject = sphereObject1;
 		float x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
 		float y = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
@@ -519,7 +524,19 @@ public:
 	}
 
 	void Animate(float tstart, float tend) {
-		for (Object* obj : objects) obj->Animate(tstart, tend);
+		for (Object* obj : objects) {
+			vec3 force = vec3(0, 0, 0);
+			if (dynamic_cast<Sphere*>(obj->geometry)) {
+				for (Object* heavyObj : objects) {
+					if (dynamic_cast<Circle*>(heavyObj->geometry)) {
+						vec3 dr = heavyObj->translation - obj->translation;
+						float dist = length(dr);
+						force = force + dr * (fNewton * obj->mass * heavyObj->mass / pow(dist, 3));
+					}
+				}
+			}
+			obj->Animate(tstart, tend, force);
+		}
 	}
 
 	void CreateNewBall() {
@@ -533,7 +550,7 @@ public:
 
 		Geometry* sphere = new Sphere();
 
-		Object* sphereObject1 = new Object(phongShader, material, texture15x20, sphere);
+		Object* sphereObject1 = new Object(phongShader, material, texture15x20, sphere, 5.0f);
 		lastSphereObject = sphereObject1;
 		float x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
 		float y = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
@@ -555,7 +572,7 @@ public:
 		for (float i = 1.0f ; i < 5.0f ; i++)
 		{
 			Geometry* circle = new Circle();
-			Object* circleObject1 = new Object(phongShader, material2, texture15x20, circle);
+			Object* circleObject1 = new Object(phongShader, material2, texture15x20, circle, 99.0f);
 			float x = cX * ((camera.wEye.z - z) / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
 			float y = cY * ((camera.wEye.z - z) / tan((camera.fovAngle * (float)M_PI / 180.0f)));
 			circleObject1->translation = vec3(x, y, z);
