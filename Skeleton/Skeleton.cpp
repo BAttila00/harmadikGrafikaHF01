@@ -418,9 +418,10 @@ public:
 		geometry->Draw();
 	}
 
-	virtual void Animate(float tstart, float tend, vec3 force) { 
+	virtual void Animate(float tstart, float tend, vec3 _force) { 
 		//rotationAngle = 0.8f * tend; 
 		float dt = tend - tstart;
+		vec3 force = vec3(_force.x, _force.y, 0.0f);
 		vec3 acceleration = force * (1 / mass);
 		velocity = velocity + acceleration * dt;
 		if(isMoving)
@@ -531,7 +532,7 @@ public:
 					if (dynamic_cast<Circle*>(heavyObj->geometry)) {
 						vec3 dr = heavyObj->translation - obj->translation;
 						float dist = length(dr);
-						force = force + dr * (fNewton * obj->mass * heavyObj->mass / pow(dist, 3));
+						force = force + dr * (fNewton * obj->mass * heavyObj->mass / pow(dist, 2));
 					}
 				}
 			}
