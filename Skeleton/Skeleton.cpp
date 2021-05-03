@@ -490,23 +490,23 @@ public:
 		lastSphereObject = sphereObject1;
 		float x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
 		float y = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
-		sphereObject1->translation = vec3(x + 0.5f, y + 0.5f, 0);
+		sphereObject1->translation = vec3(x + 0.5f, y + 0.5f, 0.15f);
 		sphereObject1->scale = vec3(0.4f, 0.4f, 0.4f);
 		objects.push_back(sphereObject1);
 
 		// Lights
 		lights.resize(3);
-		lights[0].wLightPos = vec4(5, 5, 4, 1);	// not ideal point -> dot light source
+		lights[0].wLightPos = vec4(10, 5, 4, 3);	// not ideal point -> dot light source
 		lights[0].La = vec3(0.1f, 0.1f, 1);
-		lights[0].Le = vec3(1, 1, 1);
+		lights[0].Le = vec3(3, 3, 3);
 
 		//lights[1].wLightPos = vec4(5, 10, 20, 1);	// not ideal point -> dot light source
 		//lights[1].La = vec3(0.2f, 0.2f, 0.2f);
 		//lights[1].Le = vec3(1, 1, 1);
 
-		lights[2].wLightPos = vec4(-5, 5, 5, 1);	// not ideal point -> dot light source
+		lights[2].wLightPos = vec4(-10, -10, 5, 3);	// not ideal point -> dot light source
 		lights[2].La = vec3(0.1f, 0.1f, 0.1f);
-		lights[2].Le = vec3(1, 1, 1);
+		lights[2].Le = vec3(3, 3, 3);
 	}
 
 	void Render() {
@@ -537,7 +537,7 @@ public:
 		lastSphereObject = sphereObject1;
 		float x = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
 		float y = -(camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
-		sphereObject1->translation = vec3(x + 0.5f, y + 0.5f, 0);
+		sphereObject1->translation = vec3(x + 0.5f, y + 0.5f, 0.15f);
 		sphereObject1->scale = vec3(0.4f, 0.4f, 0.4f);
 		objects.push_back(sphereObject1);
 	}
@@ -551,13 +551,23 @@ public:
 
 		Texture* texture15x20 = new CheckerBoardTexture(15, 20);		//késöbb törlendö !!!!!!!!!!!!!!!
 
-		Geometry* circle = new Circle();
-		Object* circleObject1 = new Object(phongShader, material2, texture15x20, circle);
-		float x = cX * (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
-		float y = cY * (camera.wEye.z / tan((camera.fovAngle * (float)M_PI / 180.0f)));
-		circleObject1->translation = vec3(x, y, 0.1f);
-		circleObject1->scale = vec3(1.0f, 1.0f, 1.0f);
-		objects.push_back(circleObject1);
+		float z = 0.01f;
+		for (float i = 1.0f ; i < 5.0f ; i++)
+		{
+			Geometry* circle = new Circle();
+			Object* circleObject1 = new Object(phongShader, material2, texture15x20, circle);
+			float x = cX * ((camera.wEye.z - z) / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
+			float y = cY * ((camera.wEye.z - z) / tan((camera.fovAngle * (float)M_PI / 180.0f)));
+			circleObject1->translation = vec3(x, y, z);
+			circleObject1->scale = vec3(1.0f / i, 1.0f / i, 1.0f);
+			objects.push_back(circleObject1);
+			z += 0.1f;
+			Material* material2 = new Material;
+			material2->kd = vec3(0.2f, 0.1f, 0.1f);
+			material2->ks = vec3(4, 4, 4);
+			material2->ka = vec3(0.1f, 0.1f, 0.1f);
+			material2->shininess = 20;
+		}
 	}
 };
 
