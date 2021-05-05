@@ -538,15 +538,30 @@ public:
 			}
 			obj->Animate(tstart, tend, force);
 		}
-		float dt = tend - tstart;
+		float dt = (tend - tstart) / 5;
 
 		vec4 quaternion = Quaternion(dt, vec3(0, 0, 1));
-		for (size_t i = 0; i < lights.size(); i++)
-		{
-			vec3 lightPos = vec3(lights[i].wLightPos.x, lights[i].wLightPos.y, lights[i].wLightPos.z);
-			lightPos = Rotate(lightPos, quaternion);
-			lights[i].wLightPos = vec4(lightPos.x, lightPos.y, lightPos.z, 1);
-		}
+		vec3 lightPos1 = vec3(lights[0].wLightPos.x, lights[0].wLightPos.y, lights[0].wLightPos.z);
+		vec3 lightPos2 = vec3(lights[1].wLightPos.x, lights[1].wLightPos.y, lights[1].wLightPos.z);
+		vec3 lightPos1Temp;
+		vec3 lightPos2Temp;
+
+		//calc new lightpos1
+		lightPos1Temp = lightPos1 - lightPos2;
+		lightPos1Temp = Rotate(lightPos1Temp, quaternion);
+		lightPos1Temp = lightPos1Temp + lightPos2;
+
+
+		//calc new lightpos1
+		lightPos2Temp = lightPos2 - lightPos1;
+		lightPos2Temp = Rotate(lightPos2Temp, quaternion);
+		lightPos2Temp = lightPos2Temp  + lightPos1;
+
+		//setting both light positions
+		lights[0].wLightPos = vec4(lightPos1Temp.x, lightPos1Temp.y, lightPos1Temp.z, 1);
+		lights[1].wLightPos = vec4(lightPos2Temp.x, lightPos2Temp.y, lightPos2Temp.z, 1);
+		//printf("%f, %f, %f, %f\n", lights[0].wLightPos.x, lights[0].wLightPos.y, lights[0].wLightPos.z, lights[0].wLightPos.w);
+		//printf("%f, %f, %f, %f\n\n", lights[1].wLightPos.x, lights[1].wLightPos.y, lights[1].wLightPos.z, lights[1].wLightPos.w);
 	}
 
 	void CreateNewBall() {
@@ -582,11 +597,11 @@ public:
 		for (float i = 1.0f ; i < 5.0f ; i++)
 		{
 			Geometry* circle = new Circle();
-			Object* circleObject1 = new Object(phongShader, material2, texture15x20, circle, 99.0f);
+			Object* circleObject1 = new Object(phongShader, material2, texture15x20, circle, size / 2.0f * 99.0f);
 			float x = cX * ((camera.wEye.z - z) / tan((camera.fovAngle * (float)M_PI / 180.0f)) * camera.asp);
 			float y = cY * ((camera.wEye.z - z) / tan((camera.fovAngle * (float)M_PI / 180.0f)));
 			circleObject1->translation = vec3(x, y, z);
-			circleObject1->scale = vec3(1.0f / i, 1.0f / i, 1.0f);
+			circleObject1->scale = vec3(size / 2.0f / i, size / 2.0f / i, 1.0f);
 			objects.push_back(circleObject1);
 			z += 0.1f;
 			Material* material2 = new Material;
@@ -614,6 +629,7 @@ public:
 };
 
 Scene scene;
+float size;
 
 // Initialization, create an OpenGL context
 void onInitialization() {
@@ -621,6 +637,7 @@ void onInitialization() {
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 	scene.Build();
+	size = 2;
 }
 
 // Window has become invalid: Redraw
@@ -656,7 +673,7 @@ void onMouse(int button, int state, int pX, int pY) {
 		float cX = 2.0f * pX / windowWidth - 1;	// flip y axis		//kiszámoljuk a normalizált eszközkoordinátarendszer beli kurzor pozíciót
 		float cY = 1.0f - 2.0f * pY / windowHeight;
 
-		scene.CreateNewCircle(cX, cY, 2.0f);
+		scene.CreateNewCircle(cX, cY, size++);
 	}
 }
 
