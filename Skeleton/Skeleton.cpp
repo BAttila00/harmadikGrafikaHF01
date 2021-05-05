@@ -501,18 +501,18 @@ public:
 		objects.push_back(sphereObject1);
 
 		// Lights
-		lights.resize(3);
-		lights[0].wLightPos = vec4(10, 5, 4, 3);	// not ideal point -> dot light source
+		lights.resize(2);
+		lights[0].wLightPos = vec4(7, 4, 3, 1);	// not ideal point -> dot light source
 		lights[0].La = vec3(0.1f, 0.1f, 1);
-		lights[0].Le = vec3(3, 3, 3);
+		lights[0].Le = vec3(2, 2, 2);
 
-		//lights[1].wLightPos = vec4(5, 10, 20, 1);	// not ideal point -> dot light source
+		//lights[1].wLightPos = vec4(5, 10, 20, 0);	// ideal point -> directional light source
 		//lights[1].La = vec3(0.2f, 0.2f, 0.2f);
 		//lights[1].Le = vec3(1, 1, 1);
 
-		lights[2].wLightPos = vec4(-10, -10, 5, 3);	// not ideal point -> dot light source
-		lights[2].La = vec3(0.1f, 0.1f, 0.1f);
-		lights[2].Le = vec3(3, 3, 3);
+		lights[1].wLightPos = vec4(-5, -6, 3, 1);	// not ideal point -> dot light source
+		lights[1].La = vec3(0.1f, 0.1f, 0.1f);
+		lights[1].Le = vec3(2, 2, 2);
 	}
 
 	void Render() {
@@ -524,7 +524,7 @@ public:
 		for (Object* obj : objects) obj->Draw(state);
 	}
 
-	void Animate(float tstart, float tend) {
+	void Animate(float tstart, float tend, float time) {
 		for (Object* obj : objects) {
 			vec3 force = vec3(0, 0, 0);
 			if (dynamic_cast<Sphere*>(obj->geometry)) {
@@ -537,6 +537,15 @@ public:
 				}
 			}
 			obj->Animate(tstart, tend, force);
+		}
+		float dt = tend - tstart;
+
+		vec4 quaternion = Quaternion(dt, vec3(0, 0, 1));
+		for (size_t i = 0; i < lights.size(); i++)
+		{
+			vec3 lightPos = vec3(lights[i].wLightPos.x, lights[i].wLightPos.y, lights[i].wLightPos.z);
+			lightPos = Rotate(lightPos, quaternion);
+			lights[i].wLightPos = vec4(lightPos.x, lightPos.y, lightPos.z, 1);
 		}
 	}
 
@@ -586,6 +595,21 @@ public:
 			material2->ka = vec3(0.1f, 0.1f, 0.1f);
 			material2->shininess = 20;
 		}
+	}
+	vec4 qmul(vec4 q1, vec4 q2) { // kvaternió szorzás
+		vec3 d1(q1.x, q1.y, q1.z), d2(q2.x, q2.y, q2.z);
+		vec3 tempVec3 = d2 * q1.w + d1 * q2.w + cross(d1, d2);
+		return vec4(tempVec3.x, tempVec3.y, tempVec3.z, q1.w * q2.w - dot(d1, d2));
+	}
+	vec3 Rotate(vec3 u, vec4 q) {
+		vec4 qinv(-q.x, -q.y, -q.z, q.w);
+		vec4 qr = qmul(qmul(q, vec4(u.x, u.y, u.z, 0)), qinv);
+		return vec3(qr.x, qr.y, qr.z);
+	}
+
+	vec4 Quaternion(float ang, vec3 axis) {
+		vec3 d = normalize(axis) * sinf(ang / 2);
+		return vec4(d.x, d.y, d.z, cosf(ang / 2));
 	}
 };
 
@@ -646,10 +670,11 @@ void onIdle() {
 	const float dt = 0.1f; // dt is ”infinitesimal”
 	float tstart = tend;
 	tend = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+	float time = tend;
 
 	for (float t = tstart; t < tend; t += dt) {
 		float Dt = fmin(dt, tend - t);
-		scene.Animate(t, t + Dt);
+		scene.Animate(t, t + Dt, time);
 	}
 	glutPostRedisplay();
 }
