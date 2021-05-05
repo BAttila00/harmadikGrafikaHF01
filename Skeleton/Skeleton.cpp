@@ -524,7 +524,7 @@ public:
 		for (Object* obj : objects) obj->Draw(state);
 	}
 
-	void Animate(float tstart, float tend, float time) {
+	void Animate(float tstart, float tend) {
 		for (Object* obj : objects) {
 			vec3 force = vec3(0, 0, 0);
 			if (dynamic_cast<Sphere*>(obj->geometry)) {
@@ -538,6 +538,10 @@ public:
 			}
 			obj->Animate(tstart, tend, force);
 		}
+		AnimateLights(tstart, tend);
+	}
+
+	void AnimateLights(float tstart, float tend) {
 		float dt = (tend - tstart) / 5;
 
 		vec4 quaternion = Quaternion(dt, vec3(0, 0, 1));
@@ -555,7 +559,7 @@ public:
 		//calc new lightpos1
 		lightPos2Temp = lightPos2 - lightPos1;
 		lightPos2Temp = Rotate(lightPos2Temp, quaternion);
-		lightPos2Temp = lightPos2Temp  + lightPos1;
+		lightPos2Temp = lightPos2Temp + lightPos1;
 
 		//setting both light positions
 		lights[0].wLightPos = vec4(lightPos1Temp.x, lightPos1Temp.y, lightPos1Temp.z, 1);
@@ -691,7 +695,7 @@ void onIdle() {
 
 	for (float t = tstart; t < tend; t += dt) {
 		float Dt = fmin(dt, tend - t);
-		scene.Animate(t, t + Dt, time);
+		scene.Animate(t, t + Dt);
 	}
 	glutPostRedisplay();
 }
