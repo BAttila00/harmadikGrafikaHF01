@@ -389,6 +389,7 @@ struct Object {
 	vec3 velocity;
 	bool isMoving;
 	float mass;
+	bool destroyed;
 public:
 	Object(Shader* _shader, Material* _material, Texture* _texture, Geometry* _geometry, float _mass) :
 		scale(vec3(1, 1, 1)), translation(vec3(0, 0, 0)), rotationAxis(0, 0, 1), rotationAngle(0) {
@@ -399,6 +400,7 @@ public:
 		velocity = vec3(0.0f, 0.0f, 0.0f);
 		isMoving = false;
 		mass = _mass;
+		destroyed = false;
 	}
 
 	virtual void SetModelingTransform(mat4& M, mat4& Minv) {
@@ -407,6 +409,7 @@ public:
 	}
 
 	void Draw(RenderState state) {
+		if (destroyed) return;
 		mat4 M, Minv;
 		SetModelingTransform(M, Minv);
 		state.M = M;
@@ -419,6 +422,7 @@ public:
 	}
 
 	virtual void Animate(float tstart, float tend, vec3 _force) { 
+		if (destroyed) return;
 		//rotationAngle = 0.8f * tend; 
 		float dt = tend - tstart;
 		vec3 force = vec3(_force.x, _force.y, 0.0f);
@@ -532,6 +536,7 @@ public:
 					if (dynamic_cast<Circle*>(heavyObj->geometry)) {
 						vec3 dr = heavyObj->translation - obj->translation;
 						float dist = length(dr);
+						if (dist < 0.35f) obj->destroyed = true;
 						force = force + dr * (fNewton * obj->mass * heavyObj->mass / pow(dist, 2));
 					}
 				}
